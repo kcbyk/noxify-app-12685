@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kripto Madencilik Fabrikası Simülatörü</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script>
+        // Firebase yapılandırması
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Firebase başlat
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Three.js sahnesi
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        // Işık ekle
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 0);
+        scene.add(directionalLight);
+        
+        // Neon ışık ekle
+        const neonLight = new THREE.PointLight(0x00ffff, 2, 10);
+        neonLight.position.set(0, 2, 0);
+        scene.add(neonLight);
+        
+        // 3D sunucu modelleri
+        const serverGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const serverMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+        
+        const servers = [];
+        for (let i = 0; i < 10; i++) {
+            const server = new THREE.Mesh(serverGeometry, serverMaterial);
+            server.position.set(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
+            scene.add(server);
+            servers.push(server);
+        }
+        
+        // Kamera pozisyonu
+        camera.position.z = 15;
+        
+        // Firebase'den veri al
+        database.ref('kazanc').on('value', (snapshot) => {
+            const kazanc = snapshot.val();
+            
+            // Sunucuları dön
+            servers.forEach((server, index) => {
+                server.rotation.y += kazanc / 100;
+                
+                // Neon ışık parlaklığını ayarla
+                neonLight.intensity = kazanc / 10;
+            });
+        });
+        
+        // Animasyon döngüsü
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
